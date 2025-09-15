@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:skillbridge/screens/homescreen.dart';
+import 'package:skillbridge/screens/loginscreen.dart';
 
 class SkillsSelectionScreen extends StatefulWidget {
   final String email;
@@ -49,14 +51,9 @@ class _SkillsSelectionScreenState extends State<SkillsSelectionScreen> {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // Delete temp data
       await FirebaseFirestore.instance.collection('temp_users').doc(widget.email).delete();
 
-      // Navigate to a success page or home
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      Get.put(() => const LoginScreen());
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Sign-up failed: $e')),
