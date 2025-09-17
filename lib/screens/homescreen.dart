@@ -115,6 +115,11 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
   }
+  void _showNotifications() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Notifications page')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -125,17 +130,8 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Skill Swap Marketplace'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.person, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfilePage()),
-              );
-            },
-          ),
-          IconButton(
             icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: ,
+            onPressed: _showNotifications,
           ),
         ],
       ),
