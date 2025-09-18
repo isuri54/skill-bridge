@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:skillbridge/screens/loginscreen.dart';
 import 'package:skillbridge/screens/skillsselectionscreen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -151,6 +153,13 @@ class _SignupScreenState extends State<SignupScreen> {
               ElevatedButton(
                 onPressed: _saveToFirestoreAndNavigate,
                 child: const Text('Next'),
+              ),
+              const SizedBox(height: 30),
+              GestureDetector(
+                onTap: () {
+                  Get.to(() => const LoginScreen());
+                },
+                child: Text("Already have an account? Login"),
               ),
             ],
           ),
