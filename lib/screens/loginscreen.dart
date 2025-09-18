@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:skillbridge/screens/homescreen.dart';
+import 'package:skillbridge/screens/signupscreen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -23,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _passwordController.text.trim(),
         );
 
-        Get.put(() => const HomeScreen());
+        Get.to(() => const HomeScreen());
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: $e')),
@@ -35,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF084C5C)
+      backgroundColor: Color(0xFF084C5C),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -83,6 +84,13 @@ class _LoginScreenState extends State<LoginScreen> {
               ElevatedButton(
                 onPressed: _signIn,
                 child: const Text('Login'),
+              ),
+              const SizedBox(height: 30),
+              GestureDetector(
+                onTap: () {
+                  Get.to(() => const SignupScreen());
+                },
+                child: Text("Don't have an account? Sign Up"),
               ),
             ],
           ),
