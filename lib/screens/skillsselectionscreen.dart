@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:skillbridge/screens/homescreen.dart';
 import 'package:skillbridge/screens/loginscreen.dart';
 
 class SkillsSelectionScreen extends StatefulWidget {
@@ -53,7 +52,7 @@ class _SkillsSelectionScreenState extends State<SkillsSelectionScreen> {
 
       await FirebaseFirestore.instance.collection('temp_users').doc(widget.email).delete();
 
-      Get.put(() => const LoginScreen());
+      Get.to(() => const LoginScreen());
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Sign-up failed: $e')),
