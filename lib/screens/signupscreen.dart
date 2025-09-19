@@ -54,114 +54,123 @@ class _SignupScreenState extends State<SignupScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white54),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Image(image: AssetImage('assets/images/skillbridge.png'), width: 300, height: 300,),
+                SizedBox(height: 30,),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white54),
+                    ),
                   ),
+                  style: const TextStyle(color: Colors.white),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your name';
+                    }
+                    return null;
+                  },
                 ),
-                style: const TextStyle(color: Colors.white),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white54),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white54),
+                    ),
                   ),
+                  style: const TextStyle(color: Colors.white),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty || !value.contains('@')) {
+                      return 'Please enter a valid email';
+                    }
+                    return null;
+                  },
                 ),
-                style: const TextStyle(color: Colors.white),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty || !value.contains('@')) {
-                    return 'Please enter a valid email';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _mobileController,
-                decoration: const InputDecoration(
-                  labelText: 'Mobile Number',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white54),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _mobileController,
+                  decoration: const InputDecoration(
+                    labelText: 'Mobile Number',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white54),
+                    ),
                   ),
+                  style: const TextStyle(color: Colors.white),
+                  keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value == null || value.isEmpty || value.length < 10) {
+                      return 'Please enter a valid mobile number';
+                    }
+                    return null;
+                  },
                 ),
-                style: const TextStyle(color: Colors.white),
-                keyboardType: TextInputType.phone,
-                validator: (value) {
-                  if (value == null || value.isEmpty || value.length < 10) {
-                    return 'Please enter a valid mobile number';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _bioController,
-                decoration: const InputDecoration(
-                  labelText: 'Bio',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white54),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _bioController,
+                  decoration: const InputDecoration(
+                    labelText: 'Bio',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white54),
+                    ),
                   ),
+                  style: const TextStyle(color: Colors.white),
+                  maxLines: 3,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a short bio';
+                    }
+                    return null;
+                  },
                 ),
-                style: const TextStyle(color: Colors.white),
-                maxLines: 3,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a short bio';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white54),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(
+                    labelText: 'Password',
+                    labelStyle: TextStyle(color: Colors.white70),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white54),
+                    ),
                   ),
+                  style: const TextStyle(color: Colors.white),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty || value.length < 6) {
+                      return 'Please enter a password (min 6 characters)';
+                    }
+                    return null;
+                  },
                 ),
-                style: const TextStyle(color: Colors.white),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty || value.length < 6) {
-                    return 'Please enter a password (min 6 characters)';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _saveToFirestoreAndNavigate,
-                child: const Text('Next'),
-              ),
-              const SizedBox(height: 30),
-              GestureDetector(
-                onTap: () {
-                  Get.to(() => const LoginScreen());
-                },
-                child: Text("Already have an account? Login"),
-              ),
-            ],
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _saveToFirestoreAndNavigate,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    fixedSize: Size(200, 40),
+                  ),
+                  child: const Text('Next'),
+                ),
+                const SizedBox(height: 30),
+                GestureDetector(
+                  onTap: () {
+                    Get.to(() => const LoginScreen());
+                  },
+                  child: Text("Already have an account? Login"),
+                ),
+              ],
+            ),
           ),
         ),
       ),
