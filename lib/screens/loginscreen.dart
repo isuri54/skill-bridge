@@ -43,6 +43,8 @@ class _LoginScreenState extends State<LoginScreen> {
           key: _formKey,
           child: Column(
             children: [
+              Image(image: AssetImage('assets/images/skillbridge.png'), width: 300, height: 300,),
+              SizedBox(height: 30,),
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(
@@ -83,6 +85,11 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _signIn,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  fixedSize: Size(200, 40),
+                ),
                 child: const Text('Login'),
               ),
               const SizedBox(height: 30),
@@ -90,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 onTap: () {
                   Get.to(() => const SignupScreen());
                 },
-                child: Text("Don't have an account? Sign Up"),
+                child: Text("Don't have an account? Sign Up", style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
