@@ -69,6 +69,8 @@ class _SkillsSelectionScreenState extends State<SkillsSelectionScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Image(image: AssetImage('assets/images/skillbridge.png'), width: 300, height: 300,),
+              SizedBox(height: 30,),
               const Text('Skills You Offer:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ..._offeredSkills.keys.map((skill) => CheckboxListTile(
                     title: Text(skill, style: const TextStyle(color: Colors.white)),
@@ -97,6 +99,11 @@ class _SkillsSelectionScreenState extends State<SkillsSelectionScreen> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _completeSignUp,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  fixedSize: Size(200, 40),
+                ),
                 child: const Text('Sign Up'),
               ),
             ],
