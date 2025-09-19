@@ -23,7 +23,7 @@ class _HomeState extends State<Home> {
     return Scaffold(
       body: screenList.elementAt(selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
-        unselectedItemColor: Colors.white.withOpacity(0.5),
+        unselectedItemColor: const Color.fromARGB(255, 125, 123, 123).withOpacity(0.5),
         selectedItemColor: Color(0xFF084C5C),
         selectedLabelStyle: TextStyle(
           color: Color(0xFF084C5C),
