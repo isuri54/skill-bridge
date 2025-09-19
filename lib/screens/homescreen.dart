@@ -18,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
     {'name': 'Cooking', 'icon': Icons.kitchen},
     {'name': 'Gardening', 'icon': Icons.local_florist},
     {'name': 'Photography', 'icon': Icons.camera_alt},
-    {'name': 'Language Tutoring', 'icon': Icons.language},
+    {'name': 'Language\nTutoring', 'icon': Icons.language},
     {'name': 'Bike Repair', 'icon': Icons.directions_bike},
     {'name': 'Painting', 'icon': Icons.brush},
   ];
@@ -127,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Color(0xFF084C5C),
-        title: const Text('Skill Swap Marketplace'),
+        title: Text('Hello ${userName ?? ''} !', style: TextStyle(color: Colors.white),),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications, color: Colors.white),
@@ -186,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             controller: _searchController,
                             decoration: const InputDecoration(
                               labelText: 'Search for Skills',
-                              labelStyle: TextStyle(color: Colors.white70),
+                              labelStyle: TextStyle(color: Colors.orange),
                               enabledBorder: OutlineInputBorder(
                                 borderSide: BorderSide(color: Colors.white54),
                               ),
