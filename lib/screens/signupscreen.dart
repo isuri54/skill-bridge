@@ -27,7 +27,7 @@ class _SignupScreenState extends State<SignupScreen> {
           'email': _emailController.text,
           'mobile': _mobileController.text,
           'bio': _bioController.text,
-          'password': _passwordController,
+          'password': _passwordController.text,
           'timestamp': FieldValue.serverTimestamp(),
         });
 
@@ -57,8 +57,9 @@ class _SignupScreenState extends State<SignupScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
+                SizedBox(height: 70,),
                 Image(image: AssetImage('assets/images/skillbridge.png'), width: 300, height: 300,),
-                SizedBox(height: 30,),
+                SizedBox(height: 50,),
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
@@ -152,7 +153,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
                 ElevatedButton(
                   onPressed: _saveToFirestoreAndNavigate,
                   style: ElevatedButton.styleFrom(
@@ -167,7 +168,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   onTap: () {
                     Get.to(() => const LoginScreen());
                   },
-                  child: Text("Already have an account? Login"),
+                  child: Text("Already have an account? Login", style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
