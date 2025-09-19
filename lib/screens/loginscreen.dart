@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:skillbridge/screens/homescreen.dart';
+import 'package:skillbridge/screens/bottomnavbar.dart';
 import 'package:skillbridge/screens/signupscreen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -24,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _passwordController.text.trim(),
         );
 
-        Get.to(() => const HomeScreen());
+        Get.to(() => const Home());
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: $e')),
@@ -43,8 +43,9 @@ class _LoginScreenState extends State<LoginScreen> {
           key: _formKey,
           child: Column(
             children: [
+              SizedBox(height: 70,),
               Image(image: AssetImage('assets/images/skillbridge.png'), width: 300, height: 300,),
-              SizedBox(height: 30,),
+              SizedBox(height: 50,),
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(
@@ -82,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               ElevatedButton(
                 onPressed: _signIn,
                 style: ElevatedButton.styleFrom(
