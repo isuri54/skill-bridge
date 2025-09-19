@@ -67,11 +67,12 @@ class _SkillsSelectionScreenState extends State<SkillsSelectionScreen> {
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            //crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              SizedBox(height: 70,),
               Image(image: AssetImage('assets/images/skillbridge.png'), width: 300, height: 300,),
               SizedBox(height: 30,),
-              const Text('Skills You Offer:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('Skills You Offer:', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white), textAlign: TextAlign.start,),
               ..._offeredSkills.keys.map((skill) => CheckboxListTile(
                     title: Text(skill, style: const TextStyle(color: Colors.white)),
                     value: _offeredSkills[skill],
@@ -84,7 +85,7 @@ class _SkillsSelectionScreenState extends State<SkillsSelectionScreen> {
                     activeColor: Colors.blueAccent,
                   )),
               const SizedBox(height: 20),
-              const Text('Skills You Want:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('Skills You Want:', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white), textAlign: TextAlign.start,),
               ..._wantedSkills.keys.map((skill) => CheckboxListTile(
                     title: Text(skill, style: const TextStyle(color: Colors.white)),
                     value: _wantedSkills[skill],
