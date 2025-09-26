@@ -16,6 +16,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool isLoading = true;
   String? userName;
   String? bio;
+  String? email;
   List<String> offeredSkills = [];
   List<String> wantedSkills = [];
   String? profileImagePath;
@@ -38,6 +39,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           setState(() {
             userName = userDoc['name'] as String?;
             bio = userDoc['bio'] as String?;
+            email = userDoc['email'] as String?;
             offeredSkills = List<String>.from(userDoc['offeredSkills'] ?? []);
             wantedSkills = List<String>.from(userDoc['wantedSkills'] ?? []);
             profileImagePath = userDoc['profileImagePath'] as String?;
@@ -61,7 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: const Color(0xFF084C5C),
-        title: const Text('Profile'),
+        title: const Text('Profile', style: TextStyle(color: Colors.white)),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit, color: Colors.white),
@@ -69,6 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Get.to(() => EditProfileScreen(
                     currentName: userName ?? '',
                     currentBio: bio ?? '',
+                    currentEmail: email ?? '',
                     currentOfferedSkills: offeredSkills,
                     currentWantedSkills: wantedSkills,
                     currentImagePath: profileImagePath,
@@ -105,8 +108,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 30),
                     Container(
+                      width: 400,
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF5F5F5),
@@ -124,19 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             userName ?? 'Unknown',
                             style: const TextStyle(fontSize: 16, color: Colors.black54),
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                          const SizedBox(height: 20),
                           const Text(
                             'Bio',
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
@@ -146,19 +138,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             bio ?? 'No bio provided',
                             style: const TextStyle(fontSize: 16, color: Colors.black54),
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                          const SizedBox(height: 20),
                           const Text(
                             'Offered Skills',
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
@@ -171,7 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   children: offeredSkills
                                       .map((skill) => Chip(
                                             label: Text(skill),
-                                            backgroundColor: Colors.orange.withOpacity(0.2),
+                                            backgroundColor: Colors.orange,
                                             labelStyle: const TextStyle(color: Colors.black),
                                           ))
                                       .toList(),
@@ -180,19 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   'No skills offered',
                                   style: TextStyle(fontSize: 16, color: Colors.black54),
                                 ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                          const SizedBox(height: 20),
                           const Text(
                             'Wanted Skills',
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
@@ -205,7 +173,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   children: wantedSkills
                                       .map((skill) => Chip(
                                             label: Text(skill),
-                                            backgroundColor: Colors.orange.withOpacity(0.2),
+                                            backgroundColor: Colors.orange,
                                             labelStyle: const TextStyle(color: Colors.black),
                                           ))
                                       .toList(),
