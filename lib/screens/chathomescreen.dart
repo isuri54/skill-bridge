@@ -25,38 +25,69 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
   Future<void> _fetchChats() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        QuerySnapshot chatSnapshot = await FirebaseFirestore.instance
-            .collection('chats')
-            .where('participants', arrayContains: user.uid)
-            .orderBy('lastMessageTime', descending: true)
-            .get();
-
-        List<Map<String, dynamic>> fetchedChats = [];
-        for (var doc in chatSnapshot.docs) {
-          List<String> participants = List<String>.from(doc['participants']);
-          String recipientId = participants.firstWhere((id) => id != user.uid);
-          DocumentSnapshot userDoc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(recipientId)
-              .get();
-          
-          fetchedChats.add({
-            'chatId': doc.id,
-            'recipientName': userDoc.exists ? userDoc['name'] : 'Unknown',
-            'lastMessage': doc['lastMessage'] ?? 'No messages yet',
-            'lastMessageTime': doc['lastMessageTime'] != null
-                ? (doc['lastMessageTime'] as Timestamp).toDate()
-                : DateTime.now(),
-          });
-        }
-
+      if (user == null) {
+        print('No user logged in');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No user logged in')),
+        );
         setState(() {
-          chats = fetchedChats;
           isLoading = false;
         });
+        return;
       }
+
+      print('Fetching chats for user UID: ${user.uid}');
+      QuerySnapshot chatSnapshot = await FirebaseFirestore.instance
+          .collection('chats')
+          .where('participants', arrayContains: user.uid)
+          .orderBy('lastMessageTime', descending: true)
+          .get();
+
+      print('Fetched ${chatSnapshot.docs.length} chat documents');
+      Map<String, Map<String, dynamic>> uniqueChats = {};
+      for (var doc in chatSnapshot.docs) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        List<dynamic> participants = data['participants'] ?? [];
+        if (participants.length != 2 || !participants.contains(user.uid)) {
+          print('Skipping invalid chat document: ${doc.id}, participants: $participants');
+          continue;
+        }
+        String recipientId = participants.firstWhere((id) => id != user.uid, orElse: () => '');
+        if (recipientId.isEmpty) {
+          print('No valid recipientId for chat: ${doc.id}');
+          continue;
+        }
+
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(recipientId)
+            .get();
+
+        String recipientName = userDoc.exists && userDoc['name'] != null ? userDoc['name'] : 'Unknown';
+
+        if (!uniqueChats.containsKey(recipientId) ||
+            (data['lastMessageTime'] != null &&
+                (uniqueChats[recipientId]!['lastMessageTime'] as DateTime)
+                    .isBefore((data['lastMessageTime'] as Timestamp).toDate()))) {
+          uniqueChats[recipientId] = {
+            'chatId': doc.id,
+            'recipientName': recipientName,
+            'recipientId': recipientId,
+            'lastMessage': data['lastMessage']?.toString() ?? 'No messages yet',
+            'lastMessageTime': data['lastMessageTime'] != null
+                ? (data['lastMessageTime'] as Timestamp).toDate()
+                : DateTime.now(),
+          };
+        }
+      }
+
+      print('Processed ${uniqueChats.length} unique chats');
+      setState(() {
+        chats = uniqueChats.values.toList();
+        isLoading = false;
+      });
     } catch (e) {
+      print('Error fetching chats: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error fetching chats: $e')),
       );
@@ -82,7 +113,9 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
                 'name': doc['name'] as String? ?? 'Unknown',
               })
           .toList();
+      print('Fetched ${users.length} users for new chat dialog');
     } catch (e) {
+      print('Error fetching users: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error fetching users: $e')),
       );
@@ -144,6 +177,7 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
                                 'name': doc['name'] as String? ?? 'Unknown',
                               })
                           .toList();
+                      print('Search returned ${users.length} users');
                     });
                   } else {
                     setState(() {
@@ -161,6 +195,7 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
                                 'name': doc['name'] as String? ?? 'Unknown',
                               })
                           .toList();
+                      print('Reset to ${users.length} random users');
                     });
                   }
                 },
@@ -178,19 +213,37 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
                       onTap: () async {
                         final user = FirebaseAuth.instance.currentUser;
                         if (user != null) {
-                          DocumentReference chatRef = await FirebaseFirestore.instance
+                          String recipientId = users[index]['uid']!;
+                          List<String> sortedParticipants = [user.uid, recipientId]..sort();
+                          QuerySnapshot existingChat = await FirebaseFirestore.instance
                               .collection('chats')
-                              .add({
-                            'participants': [user.uid, users[index]['uid']],
-                            'lastMessage': '',
-                            'lastMessageTime': FieldValue.serverTimestamp(),
-                          });
+                              .where('participants', isEqualTo: sortedParticipants)
+                              .limit(1)
+                              .get();
+                          String? chatId;
+                          if (existingChat.docs.isNotEmpty) {
+                            chatId = existingChat.docs.first.id;
+                            print('Found existing chat: $chatId for participants: $sortedParticipants');
+                          } else {
+                            DocumentReference chatRef = await FirebaseFirestore.instance
+                                .collection('chats')
+                                .add({
+                              'participants': sortedParticipants,
+                              'lastMessage': '',
+                              'lastMessageTime': FieldValue.serverTimestamp(),
+                            });
+                            chatId = chatRef.id;
+                            print('Created new chat: $chatId for participants: $sortedParticipants');
+                          }
+
                           ScaffoldMessenger.of(context).hideCurrentSnackBar();
                           Get.to(() => ChatScreen(
-                                chatId: chatRef.id,
+                                chatId: chatId!,
                                 recipientName: users[index]['name']!,
-                                recipientId: users[index]['uid']!,
+                                recipientId: recipientId,
                               ));
+                          await _fetchChats();
+                          print('Refreshed chats after navigation');
                         }
                       },
                     );
@@ -231,10 +284,10 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
                   itemBuilder: (context, index) {
                     return Card(
                       color: const Color(0xFFF5F5F5),
-                      margin: const EdgeInsets.symmetric(vertical: 8.0),
+                      margin: const EdgeInsets.symmetric(vertical: 4.0),
                       elevation: 2,
                       child: ListTile(
-                        contentPadding: const EdgeInsets.all(16.0),
+                        contentPadding: const EdgeInsets.all(10.0),
                         title: Text(
                           chats[index]['recipientName'],
                           style: const TextStyle(
