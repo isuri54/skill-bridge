@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:skillbridge/screens/chathomescreen.dart';
 import 'package:skillbridge/screens/homescreen.dart';
+import 'package:skillbridge/screens/profilescreen.dart';
+import 'package:skillbridge/screens/schedulesscreen.dart';
+import 'package:skillbridge/screens/settingsscreen.dart';
 
-class Home extends StatefulWidget {
-  const Home({super.key});
+class BottomNavBar extends StatefulWidget {
+  const BottomNavBar({super.key});
 
   @override
-  State<Home> createState() => _HomeState();
+  State<BottomNavBar> createState() => _BottomNavBarState();
 }
 
-class _HomeState extends State<Home> {
+class _BottomNavBarState extends State<BottomNavBar> {
 
   int selectedIndex = 0;
   List screenList = [
     const HomeScreen(),
-    const HomeScreen(),
-    const HomeScreen(),
-    const HomeScreen(),
+    const SchedulesScreen(),
+    const ChatsHomeScreen(),
+    const ProfileScreen(),
+    const SettingsScreen(),
   ];
 
   @override
@@ -44,6 +49,7 @@ class _HomeState extends State<Home> {
           BottomNavigationBarItem(icon: Icon(Icons.book), label: "Schedules"),
           BottomNavigationBarItem(icon: Icon(Icons.message), label: "Chats"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
         ]),
     );
   }
