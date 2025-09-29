@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:skillbridge/screens/chatsscreen.dart';
 
 class ChatsHomeScreen extends StatefulWidget {
   const ChatsHomeScreen({super.key});
@@ -91,12 +92,29 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: const Duration(seconds: 10),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.symmetric(
+          horizontal: 16.0,
+          vertical: MediaQuery.of(context).size.height * 0.2,
+        ),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
         content: Container(
           height: 300,
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
+              Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.orange),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  },
+                ),
+              ),
               TextField(
                 controller: searchController,
                 decoration: const InputDecoration(
@@ -167,8 +185,12 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
                             'lastMessage': '',
                             'lastMessageTime': FieldValue.serverTimestamp(),
                           });
-                          Get.back();
-                          Get.to(());
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          Get.to(() => ChatScreen(
+                                chatId: chatRef.id,
+                                recipientName: users[index]['name']!,
+                                recipientId: users[index]['uid']!,
+                              ));
                         }
                       },
                     );
@@ -178,7 +200,6 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
             ],
           ),
         ),
-        backgroundColor: Colors.white,
       ),
     );
   }
@@ -240,7 +261,11 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
                           ],
                         ),
                         onTap: () {
-                          Get.to(());
+                          Get.to(() => ChatScreen(
+                                chatId: chats[index]['chatId'],
+                                recipientName: chats[index]['recipientName'],
+                                recipientId: chats[index]['recipientId'],
+                              ));
                         },
                       ),
                     );
