@@ -70,7 +70,6 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
     List<Map<String, String>> users = [];
     bool isSearching = false;
 
-    // Fetch 10 random users
     try {
       QuerySnapshot userSnapshot = await FirebaseFirestore.instance
           .collection('users')
@@ -132,7 +131,6 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
                     setState(() {
                       isSearching = false;
                     });
-                    // Refetch 10 random users
                     QuerySnapshot userSnapshot = await FirebaseFirestore.instance
                         .collection('users')
                         .limit(10)
@@ -162,7 +160,6 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
                       onTap: () async {
                         final user = FirebaseAuth.instance.currentUser;
                         if (user != null) {
-                          // Create new chat
                           DocumentReference chatRef = await FirebaseFirestore.instance
                               .collection('chats')
                               .add({
@@ -189,10 +186,10 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // White background
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF084C5C), // Teal app bar
-        title: const Text('Chats'),
+        backgroundColor: const Color(0xFF084C5C),
+        title: const Text('Chats', style: TextStyle(color: Colors.white)),
       ),
       body: isLoading
           ? const Center(
@@ -251,7 +248,7 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showNewChatDialog,
-        backgroundColor: Colors.orange, // Orange button
+        backgroundColor: Colors.orange,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
