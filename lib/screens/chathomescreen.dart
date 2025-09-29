@@ -64,6 +64,9 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
             .get();
 
         String recipientName = userDoc.exists && userDoc['name'] != null ? userDoc['name'] : 'Unknown';
+        String? profileImagePath = userDoc.exists && userDoc['profileImagePath'] != null
+            ? userDoc['profileImagePath']
+            : null;
 
         if (!uniqueChats.containsKey(recipientId) ||
             (data['lastMessageTime'] != null &&
@@ -77,6 +80,7 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
             'lastMessageTime': data['lastMessageTime'] != null
                 ? (data['lastMessageTime'] as Timestamp).toDate()
                 : DateTime.now(),
+            'profileImagePath': profileImagePath,
           };
         }
       }
@@ -288,30 +292,43 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
                       elevation: 2,
                       child: ListTile(
                         contentPadding: const EdgeInsets.all(10.0),
-                        title: Text(
-                          chats[index]['recipientName'],
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: Colors.black,
-                          ),
+                        leading: CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Colors.grey[300],
+                          backgroundImage: chats[index]['profileImagePath'] != null
+                              ? NetworkImage(chats[index]['profileImagePath'])
+                              : null,
+                          child: chats[index]['profileImagePath'] == null
+                              ? const Icon(Icons.person, color: Colors.grey)
+                              : null,
                         ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const SizedBox(height: 4),
-                            Text(
-                              chats[index]['lastMessage'],
-                              style: const TextStyle(color: Colors.black54),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            Expanded(
+                              child: Text(
+                                chats[index]['recipientName'],
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: Colors.black,
+                                ),
+                              ),
                             ),
-                            const SizedBox(height: 4),
                             Text(
                               DateFormat('MMM d, h:mm a').format(chats[index]['lastMessageTime']),
-                              style: const TextStyle(color: Colors.black54, fontSize: 12),
+                              style: const TextStyle(
+                                color: Colors.black54,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
+                        ),
+                        subtitle: Text(
+                          chats[index]['lastMessage'],
+                          style: const TextStyle(color: Colors.black54),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         onTap: () {
                           Get.to(() => ChatScreen(
