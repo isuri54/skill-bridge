@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -34,8 +32,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
   final _emailController = TextEditingController();
-  String? _imageBase64;
-  File? _selectedImage;
+  String? _imagePath;
   final Map<String, bool> _offeredSkills = {
     'Cooking': false,
     'Gardening': false,
@@ -77,7 +74,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.text = widget.currentName;
     _bioController.text = widget.currentBio;
     _emailController.text = widget.currentEmail;
-    _imageBase64 = widget.currentImagePath;
+    _imagePath = widget.currentImagePath;
     for (var skill in widget.currentOfferedSkills) {
       if (_offeredSkills.containsKey(skill)) {
         _offeredSkills[skill] = true;
@@ -95,13 +92,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
-        final bytes = await File(pickedFile.path).readAsBytes();
-        final base64Image = base64Encode(bytes);
+        final directory = await getApplicationDocumentsDirectory();
+        final fileName = 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final savedImage = await File(pickedFile.path).copy('${directory.path}/$fileName');
         setState(() {
-          _selectedImage = File(pickedFile.path);
-          _imageBase64 = base64Image;
+          _imagePath = savedImage.path;
         });
-        print('Picked image and converted to base64 (length: ${base64Image.length})');
+        print('Picked and saved image: ${_imagePath}');
       }
     } catch (e) {
       print('Error picking image: $e');
@@ -114,21 +111,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _saveProfile() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-          'name': _nameController.text,
-          'bio': _bioController.text,
-          'email': _emailController.text,
-          'offeredSkills': _offeredSkills.entries.where((entry) => entry.value).map((entry) => entry.key).toList(),
-          'wantedSkills': _wantedSkills.entries.where((entry) => entry.value).map((entry) => entry.key).toList(),
-          if (_imageBase64 != null) 'profileImageBase64': _imageBase64,
-        });
-        Get.back();
+      if (user == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully')),
+          const SnackBar(content: Text('No user logged in')),
         );
+        return;
       }
+
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        'name': _nameController.text.trim(),
+        'bio': _bioController.text.trim(),
+        'email': _emailController.text.trim(),
+        'offeredSkills': _offeredSkills.entries.where((entry) => entry.value).map((entry) => entry.key).toList(),
+        'wantedSkills': _wantedSkills.entries.where((entry) => entry.value).map((entry) => entry.key).toList(),
+        if (_imagePath != null) 'profileImagePath': _imagePath,
+      });
+
+      Get.back();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile updated successfully')),
+      );
     } catch (e) {
+      print('Error updating profile: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating profile: $e')),
       );
@@ -154,12 +158,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   onTap: _pickImage,
                   child: CircleAvatar(
                     radius: 50,
-                    backgroundImage: _selectedImage != null
-                        ? FileImage(_selectedImage!)
-                        : _imageBase64 != null
-                            ? MemoryImage(base64Decode(_imageBase64!))
-                            : const AssetImage('assets/images/userpng.png') as ImageProvider,
-                    child: (_selectedImage == null && _imageBase64 == null)
+                    backgroundColor: Colors.grey[300],
+                    backgroundImage: _imagePath != null && File(_imagePath!).existsSync()
+                        ? FileImage(File(_imagePath!))
+                        : const AssetImage('assets/images/userpng.png') as ImageProvider,
+                    child: _imagePath == null || !File(_imagePath!).existsSync()
                         ? const Icon(Icons.person, color: Colors.grey)
                         : null,
                   ),
