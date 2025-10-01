@@ -18,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
     {'name': 'Cooking', 'icon': Icons.kitchen},
     {'name': 'Gardening', 'icon': Icons.local_florist},
     {'name': 'Photography', 'icon': Icons.camera_alt},
-    {'name': 'Language\nTutoring', 'icon': Icons.language},
+    {'name': 'Language Tutoring', 'icon': Icons.language},
     {'name': 'Bike Repair', 'icon': Icons.directions_bike},
     {'name': 'Painting', 'icon': Icons.brush},
   ];
