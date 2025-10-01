@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -295,12 +297,14 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
                         leading: CircleAvatar(
                           radius: 20,
                           backgroundColor: Colors.grey[300],
-                          backgroundImage: chats[index]['profileImagePath'] != null
-                              ? NetworkImage(chats[index]['profileImagePath'])
-                              : null,
-                          child: chats[index]['profileImagePath'] == null
-                              ? const Icon(Icons.person, color: Colors.grey)
-                              : null,
+                          backgroundImage: chats[index]['profileImagePath'] != null &&
+                            File(chats[index]['profileImagePath']).existsSync()
+                            ? FileImage(File(chats[index]['profileImagePath']))
+                            : null,
+                        child: chats[index]['profileImagePath'] == null ||
+                            !File(chats[index]['profileImagePath']).existsSync()
+                            ? const Icon(Icons.person, color: Colors.grey)
+                            : null,
                         ),
                         title: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
