@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -33,7 +34,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
   final _emailController = TextEditingController();
-  String? _imagePath;
+  String? _imageBase64;
+  File? _selectedImage;
   final Map<String, bool> _offeredSkills = {
     'Cooking': false,
     'Gardening': false,
@@ -75,7 +77,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.text = widget.currentName;
     _bioController.text = widget.currentBio;
     _emailController.text = widget.currentEmail;
-    _imagePath = widget.currentImagePath;
+    _imageBase64 = widget.currentImagePath;
     for (var skill in widget.currentOfferedSkills) {
       if (_offeredSkills.containsKey(skill)) {
         _offeredSkills[skill] = true;
@@ -89,15 +91,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      final directory = await getApplicationDocumentsDirectory();
-      final fileName = 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final savedImage = await File(pickedFile.path).copy('${directory.path}/$fileName');
-      setState(() {
-        _imagePath = savedImage.path;
-      });
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        final bytes = await File(pickedFile.path).readAsBytes();
+        final base64Image = base64Encode(bytes);
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+          _imageBase64 = base64Image;
+        });
+        print('Picked image and converted to base64 (length: ${base64Image.length})');
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
     }
   }
 
@@ -111,7 +121,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           'email': _emailController.text,
           'offeredSkills': _offeredSkills.entries.where((entry) => entry.value).map((entry) => entry.key).toList(),
           'wantedSkills': _wantedSkills.entries.where((entry) => entry.value).map((entry) => entry.key).toList(),
-          if (_imagePath != null) 'profileImagePath': _imagePath,
+          if (_imageBase64 != null) 'profileImageBase64': _imageBase64,
         });
         Get.back();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -144,10 +154,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   onTap: _pickImage,
                   child: CircleAvatar(
                     radius: 50,
-                    backgroundImage: _imagePath != null && File(_imagePath!).existsSync()
-                        ? FileImage(File(_imagePath!))
-                        : const AssetImage('assets/images/userpng.png') as ImageProvider,
-                    backgroundColor: Colors.grey[300],
+                    backgroundImage: _selectedImage != null
+                        ? FileImage(_selectedImage!)
+                        : _imageBase64 != null
+                            ? MemoryImage(base64Decode(_imageBase64!))
+                            : const AssetImage('assets/images/userpng.png') as ImageProvider,
+                    child: (_selectedImage == null && _imageBase64 == null)
+                        ? const Icon(Icons.person, color: Colors.grey)
+                        : null,
                   ),
                 ),
               ),
@@ -253,6 +267,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _bioController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 }
