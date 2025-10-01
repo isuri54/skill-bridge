@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,6 +14,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _searchController = TextEditingController();
   String? userName;
   bool isLoading = true;
+  List<Map<String, dynamic>> popularPeople = [];
 
   final List<Map<String, dynamic>> trendingSkills = [
     {'name': 'Cooking', 'icon': Icons.kitchen},
@@ -21,51 +23,6 @@ class _HomeScreenState extends State<HomeScreen> {
     {'name': 'Language Tutoring', 'icon': Icons.language},
     {'name': 'Bike Repair', 'icon': Icons.directions_bike},
     {'name': 'Painting', 'icon': Icons.brush},
-  ];
-
-  final List<Map<String, dynamic>> popularPeople = [
-    {
-      'name': 'Alice Smith',
-      'skill': 'Cooking',
-      'bio': 'Passionate chef sharing culinary skills.',
-      'rating': 4.8,
-      'image': 'https://via.placeholder.com/50',
-    },
-    {
-      'name': 'Bob Johnson',
-      'skill': 'Gardening',
-      'bio': 'Expert in organic gardening.',
-      'rating': 4.5,
-      'image': 'https://via.placeholder.com/50',
-    },
-    {
-      'name': 'Clara Lee',
-      'skill': 'Photography',
-      'bio': 'Capturing moments with creativity.',
-      'rating': 4.7,
-      'image': 'https://via.placeholder.com/50',
-    },
-    {
-      'name': 'David Kim',
-      'skill': 'Language Tutoring',
-      'bio': 'Fluent in 3 languages, eager to teach.',
-      'rating': 4.9,
-      'image': 'https://via.placeholder.com/50',
-    },
-    {
-      'name': 'Emma Brown',
-      'skill': 'Bike Repair',
-      'bio': 'Fixing bikes with precision.',
-      'rating': 4.6,
-      'image': 'https://via.placeholder.com/50',
-    },
-    {
-      'name': 'Frank Wilson',
-      'skill': 'Painting',
-      'bio': 'Creating art with vibrant colors.',
-      'rating': 4.4,
-      'image': 'https://via.placeholder.com/50',
-    },
   ];
 
   @override
@@ -78,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
+        // Fetch current user's name
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
@@ -85,11 +43,36 @@ class _HomeScreenState extends State<HomeScreen> {
         if (userDoc.exists) {
           setState(() {
             userName = userDoc['name'] as String?;
-            isLoading = false;
           });
         }
+
+        // Fetch 6 random users for popular people
+        QuerySnapshot userSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .limit(6)
+            .get();
+
+        List<Map<String, dynamic>> fetchedPeople = userSnapshot.docs.map((doc) {
+          Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+          List<dynamic> skills = data['offeredSkills'] ?? [];
+          String? imagePath = data['profileImagePath']?.toString();
+          print('Fetched profileImagePath for ${data['name']}: $imagePath');
+          return {
+            'name': data['name']?.toString() ?? 'Unknown',
+            'skill': skills.isNotEmpty ? skills[0].toString() : 'No skills listed',
+            'bio': data['bio']?.toString() ?? 'No bio available',
+            'imagePath': imagePath,
+            'uid': doc.id,
+          };
+        }).toList();
+
+        setState(() {
+          popularPeople = fetchedPeople;
+          isLoading = false;
+        });
       }
     } catch (e) {
+      print('Error fetching user data: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error fetching user data: $e')),
       );
@@ -110,11 +93,13 @@ class _HomeScreenState extends State<HomeScreen> {
         SnackBar(content: Text('Found ${querySnapshot.docs.length} users offering $query')),
       );
     } catch (e) {
+      print('Error searching skills: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Search failed: $e')),
       );
     }
   }
+
   void _showNotifications() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Notifications page')),
@@ -126,8 +111,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Color(0xFF084C5C),
-        title: Text('Hello ${userName ?? ''} !', style: TextStyle(color: Colors.white),),
+        backgroundColor: const Color(0xFF084C5C),
+        title: Text(
+          'Hello ${userName ?? ''} !',
+          style: const TextStyle(color: Colors.white),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications, color: Colors.white),
@@ -136,7 +124,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+              ),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -322,8 +314,16 @@ class _HomeScreenState extends State<HomeScreen> {
                               margin: const EdgeInsets.symmetric(vertical: 8.0),
                               child: ListTile(
                                 leading: CircleAvatar(
-                                  backgroundImage: NetworkImage(popularPeople[index]['image']),
                                   radius: 25,
+                                  backgroundColor: Colors.grey[300],
+                                  backgroundImage: popularPeople[index]['imagePath'] != null &&
+                                    File(popularPeople[index]['imagePath']).existsSync()
+                                    ? FileImage(File(popularPeople[index]['imagePath']))
+                                    : null,
+                                child: popularPeople[index]['imagePath'] == null ||
+                                    !File(popularPeople[index]['imagePath']).existsSync()
+                                    ? const Icon(Icons.person, color: Colors.grey)
+                                    : null,
                                 ),
                                 title: Text(
                                   popularPeople[index]['name'],
@@ -344,16 +344,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                       style: const TextStyle(color: Colors.black54),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                    ),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.star, color: Colors.orange, size: 16),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          popularPeople[index]['rating'].toString(),
-                                          style: const TextStyle(color: Colors.black54),
-                                        ),
-                                      ],
                                     ),
                                   ],
                                 ),
