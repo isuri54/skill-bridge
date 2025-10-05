@@ -70,6 +70,14 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
             ? userDoc['profileImagePath']
             : null;
 
+        Map<String, dynamic> viewedTimes = data['lastViewedTime'] ?? {};
+        DateTime? lastViewedTime = viewedTimes[user.uid] != null
+            ? (viewedTimes[user.uid] as Timestamp).toDate()
+            : null;
+        bool isUnread = data['lastMessageTime'] != null &&
+            (lastViewedTime == null ||
+                (data['lastMessageTime'] as Timestamp).toDate().isAfter(lastViewedTime));
+
         if (!uniqueChats.containsKey(recipientId) ||
             (data['lastMessageTime'] != null &&
                 (uniqueChats[recipientId]!['lastMessageTime'] as DateTime)
@@ -83,6 +91,7 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
                 ? (data['lastMessageTime'] as Timestamp).toDate()
                 : DateTime.now(),
             'profileImagePath': profileImagePath,
+            'isUnread': isUnread,
           };
         }
       }
@@ -285,66 +294,79 @@ class _ChatsHomeScreenState extends State<ChatsHomeScreen> {
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.all(16.0),
-                  itemCount: chats.length,
-                  itemBuilder: (context, index) {
-                    return Card(
-                      color: const Color(0xFFF5F5F5),
-                      margin: const EdgeInsets.symmetric(vertical: 4.0),
-                      elevation: 2,
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(10.0),
-                        leading: CircleAvatar(
-                          radius: 20,
-                          backgroundColor: Colors.grey[300],
-                          backgroundImage: chats[index]['profileImagePath'] != null &&
-                            File(chats[index]['profileImagePath']).existsSync()
+                padding: const EdgeInsets.all(16.0),
+                itemCount: chats.length,
+                itemBuilder: (context, index) {
+                  return Card(
+                    color: const Color(0xFFF5F5F5),
+                    margin: const EdgeInsets.symmetric(vertical: 4.0),
+                    elevation: 2,
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(10.0),
+                      leading: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.grey[300],
+                        backgroundImage: chats[index]['profileImagePath'] != null &&
+                                File(chats[index]['profileImagePath']).existsSync()
                             ? FileImage(File(chats[index]['profileImagePath']))
                             : null,
                         child: chats[index]['profileImagePath'] == null ||
-                            !File(chats[index]['profileImagePath']).existsSync()
+                                !File(chats[index]['profileImagePath']).existsSync()
                             ? const Icon(Icons.person, color: Colors.grey)
                             : null,
-                        ),
-                        title: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                chats[index]['recipientName'],
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              DateFormat('MMM d, h:mm a').format(chats[index]['lastMessageTime']),
-                              style: const TextStyle(
-                                color: Colors.black54,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                        subtitle: Text(
-                          chats[index]['lastMessage'],
-                          style: const TextStyle(color: Colors.black54),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        onTap: () {
-                          Get.to(() => ChatScreen(
-                                chatId: chats[index]['chatId'],
-                                recipientName: chats[index]['recipientName'],
-                                recipientId: chats[index]['recipientId'],
-                              ));
-                        },
                       ),
-                    );
-                  },
-                ),
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              chats[index]['recipientName'],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            DateFormat('MMM d, h:mm a').format(chats[index]['lastMessageTime']),
+                            style: const TextStyle(
+                              color: Colors.black54,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      subtitle: Text(
+                        chats[index]['lastMessage'],
+                        style: TextStyle(
+                          color: Colors.black54,
+                          fontWeight: chats[index]['isUnread'] ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onTap: () async {
+                        final user = FirebaseAuth.instance.currentUser;
+                        if (user != null) {
+                          await FirebaseFirestore.instance
+                              .collection('chats')
+                              .doc(chats[index]['chatId'])
+                              .update({
+                            'lastViewedTime.${user.uid}': FieldValue.serverTimestamp(),
+                          });
+                        }
+                        Get.to(() => ChatScreen(
+                              chatId: chats[index]['chatId'],
+                              recipientName: chats[index]['recipientName'],
+                              recipientId: chats[index]['recipientId'],
+                            ));
+                        await _fetchChats();
+                      },
+                    ),
+                  );
+                },
+              ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showNewChatDialog,
         backgroundColor: Colors.orange,
