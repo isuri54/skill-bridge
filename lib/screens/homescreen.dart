@@ -2,6 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:get/get.dart';
+import 'package:skillbridge/screens/categoryscreen.dart';
+import 'package:skillbridge/screens/mentorprofilescreen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,47 +37,48 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchUserData() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        // Fetch current user's name
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
-        if (userDoc.exists) {
-          setState(() {
-            userName = userDoc['name'] as String?;
-          });
-        }
-
-        // Fetch 6 random users for popular people
-        QuerySnapshot userSnapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .limit(6)
-            .get();
-
-        List<Map<String, dynamic>> fetchedPeople = userSnapshot.docs.map((doc) {
-          Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-          List<dynamic> skills = data['offeredSkills'] ?? [];
-          String? imagePath = data['profileImagePath']?.toString();
-          print('Fetched profileImagePath for ${data['name']}: $imagePath');
-          return {
-            'name': data['name']?.toString() ?? 'Unknown',
-            'skill': skills.isNotEmpty ? skills[0].toString() : 'No skills listed',
-            'bio': data['bio']?.toString() ?? 'No bio available',
-            'imagePath': imagePath,
-            'uid': doc.id,
-          };
-        }).toList();
-
+      if (user == null) {
+        print('No user logged in');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please log in to view users')),
+        );
         setState(() {
-          popularPeople = fetchedPeople;
           isLoading = false;
         });
+        return;
       }
+
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .get();
+
+      List<Map<String, dynamic>> fetchedUsers = querySnapshot.docs
+          .where((doc) => doc.id != user.uid)
+          .map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        List<String> skills = List<String>.from(data['offeredSkills'] ?? []);
+        return {
+          'uid': doc.id,
+          'name': data['name']?.toString() ?? 'Unknown',
+          'bio': data['bio']?.toString() ?? 'No bio available',
+          'email': data['email']?.toString() ?? 'No email provided',
+          'mobile': data['mobile']?.toString() ?? 'No mobile number provided',
+          'offeredSkills': skills,
+          'wantedSkills': List<String>.from(data['wantedSkills'] ?? []),
+          'imagePath': data['profileImagePath']?.toString(),
+          'skill': skills.isNotEmpty ? skills[0] : 'No skills listed',
+        };
+      }).toList();
+
+      print('Fetched ${fetchedUsers.length} users for Popular People');
+      setState(() {
+        popularPeople = fetchedUsers;
+        isLoading = false;
+      });
     } catch (e) {
       print('Error fetching user data: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching user data: $e')),
+        SnackBar(content: Text('Error fetching users: $e')),
       );
       setState(() {
         isLoading = false;
@@ -224,9 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             TextButton(
                               onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('View all skills')),
-                                );
+                                Get.to(() => const CategoryScreen());
                               },
                               child: const Text(
                                 'View All',
@@ -271,11 +273,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 20),
                   Container(
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
+                    color: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -292,9 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             TextButton(
                               onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('View all people')),
-                                );
+                                Get.to(() => const CategoryScreen());
                               },
                               child: const Text(
                                 'View All',
@@ -304,53 +301,79 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: popularPeople.length,
-                          itemBuilder: (context, index) {
-                            return Card(
-                              color: Colors.white,
-                              margin: const EdgeInsets.symmetric(vertical: 8.0),
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  radius: 25,
-                                  backgroundColor: Colors.grey[300],
-                                  backgroundImage: popularPeople[index]['imagePath'] != null &&
-                                    File(popularPeople[index]['imagePath']).existsSync()
-                                    ? FileImage(File(popularPeople[index]['imagePath']))
-                                    : null,
-                                child: popularPeople[index]['imagePath'] == null ||
-                                    !File(popularPeople[index]['imagePath']).existsSync()
-                                    ? const Icon(Icons.person, color: Colors.grey)
-                                    : null,
+                        isLoading
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
                                 ),
-                                title: Text(
-                                  popularPeople[index]['name'],
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
+                              )
+                            : popularPeople.isEmpty
+                                ? const Center(
+                                    child: Text(
+                                      'No users found',
+                                      style: TextStyle(fontSize: 16, color: Colors.black54),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemCount: popularPeople.length,
+                                    itemBuilder: (context, index) {
+                                      return Card(
+                                        color: Colors.white,
+                                        margin: const EdgeInsets.symmetric(vertical: 8.0),
+                                        child: ListTile(
+                                          leading: CircleAvatar(
+                                            radius: 25,
+                                            backgroundColor: Colors.grey[300],
+                                            backgroundImage: popularPeople[index]['imagePath'] != null &&
+                                                    File(popularPeople[index]['imagePath']).existsSync()
+                                                ? FileImage(File(popularPeople[index]['imagePath']))
+                                                : null,
+                                            child: popularPeople[index]['imagePath'] == null ||
+                                                    !File(popularPeople[index]['imagePath']).existsSync()
+                                                ? const Icon(Icons.person, color: Colors.grey)
+                                                : null,
+                                          ),
+                                          title: Text(
+                                            popularPeople[index]['name'],
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                          subtitle: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Skill: ${popularPeople[index]['skill']}',
+                                                style: const TextStyle(color: Colors.black54),
+                                              ),
+                                              Text(
+                                                popularPeople[index]['bio'],
+                                                style: const TextStyle(color: Colors.black54),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                          onTap: () {
+                                            print('Navigating to MentorProfileScreen for UID: ${popularPeople[index]['uid']}');
+                                            Get.to(() => MentorProfileScreen(
+                                                  mentorId: popularPeople[index]['uid'],
+                                                  name: popularPeople[index]['name'],
+                                                  bio: popularPeople[index]['bio'],
+                                                  email: popularPeople[index]['email'],
+                                                  mobile: popularPeople[index]['mobile'],
+                                                  offeredSkills: List<String>.from(popularPeople[index]['offeredSkills'] ?? []),
+                                                  wantedSkills: List<String>.from(popularPeople[index]['wantedSkills'] ?? []),
+                                                  profileImagePath: popularPeople[index]['imagePath'],
+                                                ));
+                                          },
+                                        ),
+                                      );
+                                    },
                                   ),
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Skill: ${popularPeople[index]['skill']}',
-                                      style: const TextStyle(color: Colors.black54),
-                                    ),
-                                    Text(
-                                      popularPeople[index]['bio'],
-                                      style: const TextStyle(color: Colors.black54),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
                       ],
                     ),
                   ),
