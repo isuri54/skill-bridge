@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
+import 'package:skillbridge/screens/loginscreen.dart';
 import 'package:skillbridge/screens/signupscreen.dart';
 import 'profilescreen.dart';
 
@@ -81,7 +82,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _logout() async {
     try {
       await FirebaseAuth.instance.signOut();
-      Get.offAll(() => const SignupScreen());
+      Get.offAll(() => const LoginScreen());
       print('User logged out');
     } catch (e) {
       print('Error logging out: $e');
