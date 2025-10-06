@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:skillbridge/screens/bottomnavbar.dart';
-import 'package:skillbridge/screens/homescreen.dart';
 import 'package:skillbridge/screens/signupscreen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -24,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 2));
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      Get.offAll(() => const Home());
+      Get.offAll(() => const BottomNavBar());
     } else {
       Get.offAll(() => const SignupScreen());
     }
@@ -42,15 +41,6 @@ class _SplashScreenState extends State<SplashScreen> {
               image: AssetImage('assets/images/skillbridge.png'),
               width: 200,
               height: 200,
-            ),
-            SizedBox(height: 20),
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Loading Skill Swap Marketplace...',
-              style: TextStyle(color: Colors.white, fontSize: 16),
             ),
           ],
         ),
