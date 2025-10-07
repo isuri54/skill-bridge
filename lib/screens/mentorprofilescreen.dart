@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
+import 'package:skillbridge/screens/makeschedulescreen.dart';
 import 'chatsscreen.dart';
 
 class MentorProfileScreen extends StatelessWidget {
@@ -162,9 +163,7 @@ class MentorProfileScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     ElevatedButton(
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Schedule functionality coming soon')),
-                        );
+                        Get.to(() => MakeScheduleScreen(mentorId: mentorId, mentorName: name, profileImagePath: profileImagePath, offeredSkills: offeredSkills));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orange,
