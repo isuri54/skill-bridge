@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +23,30 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  String? recipientProfileImagePath;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRecipientProfileImage();
+  }
+
+  Future<void> _fetchRecipientProfileImage() async {
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.recipientId)
+          .get();
+      if (userDoc.exists) {
+        setState(() {
+          recipientProfileImagePath = userDoc['profileImagePath']?.toString();
+        });
+        print('Fetched profile image path: $recipientProfileImagePath');
+      }
+    } catch (e) {
+      print('Error fetching recipient profile image: $e');
+    }
+  }
 
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
@@ -63,7 +89,28 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: const Color(0xFF084C5C),
-        title: Text(widget.recipientName, style: TextStyle(color: Colors.white)),
+        automaticallyImplyLeading: false,
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.grey[300],
+              backgroundImage: recipientProfileImagePath != null &&
+                      File(recipientProfileImagePath!).existsSync()
+                  ? FileImage(File(recipientProfileImagePath!))
+                  : null,
+              child: recipientProfileImagePath == null ||
+                      !File(recipientProfileImagePath!).existsSync()
+                  ? const Icon(Icons.person, color: Colors.grey)
+                  : null,
+            ),
+            const SizedBox(width: 15),
+            Text(
+              widget.recipientName,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
       ),
       body: Column(
         children: [
