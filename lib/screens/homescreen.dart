@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import 'package:skillbridge/screens/categoryscreen.dart';
 import 'package:skillbridge/screens/mentorprofilescreen.dart';
+import 'package:skillbridge/screens/mentorsscreen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,9 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
     {'name': 'Cooking', 'icon': Icons.kitchen},
     {'name': 'Gardening', 'icon': Icons.local_florist},
     {'name': 'Photography', 'icon': Icons.camera_alt},
-    {'name': 'Language Tutoring', 'icon': Icons.language},
     {'name': 'Bike Repair', 'icon': Icons.directions_bike},
     {'name': 'Painting', 'icon': Icons.brush},
+    {'name': 'Language Tutoring', 'icon': Icons.language},
   ];
 
   @override
@@ -47,6 +48,12 @@ class _HomeScreenState extends State<HomeScreen> {
         });
         return;
       }
+
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      String? fetchedUserName = userDoc.exists ? userDoc['name']?.toString() : null;
 
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('users')
@@ -71,7 +78,9 @@ class _HomeScreenState extends State<HomeScreen> {
       }).toList();
 
       print('Fetched ${fetchedUsers.length} users for Popular People');
+      print('Current user name: $fetchedUserName');
       setState(() {
+        userName = fetchedUserName;
         popularPeople = fetchedUsers;
         isLoading = false;
       });
@@ -244,25 +253,32 @@ class _HomeScreenState extends State<HomeScreen> {
                             scrollDirection: Axis.horizontal,
                             itemCount: trendingSkills.length,
                             itemBuilder: (context, index) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 16.0),
-                                child: Column(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 30,
-                                      backgroundColor: Colors.orange,
-                                      child: Icon(
-                                        trendingSkills[index]['icon'],
-                                        color: Colors.white,
-                                        size: 30,
+                              return GestureDetector(
+                                onTap: () {
+                                  Get.to(() => MentorsScreen(
+                                        skill: trendingSkills[index]['name'],
+                                      ));
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 16.0),
+                                  child: Column(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 30,
+                                        backgroundColor: Colors.orange,
+                                        child: Icon(
+                                          trendingSkills[index]['icon'],
+                                          color: Colors.white,
+                                          size: 30,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      trendingSkills[index]['name'],
-                                      style: const TextStyle(color: Colors.black),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        trendingSkills[index]['name'],
+                                        style: const TextStyle(color: Colors.black),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               );
                             },
