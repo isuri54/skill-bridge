@@ -160,11 +160,13 @@ class _MentorProfileScreenState extends State<MentorProfileScreen> {
   int sessionsLearned = 0;
   double totalHoursMentored = 0.0;
   DateTime? profileCreatedAt;
+  bool hasCompletedSession = false;
 
   @override
   void initState() {
     super.initState();
     _fetchMentorData();
+    _checkCompletedSession();
   }
 
   Future<void> _fetchMentorData() async {
@@ -177,15 +179,13 @@ class _MentorProfileScreenState extends State<MentorProfileScreen> {
       QuerySnapshot mentorSessions = await FirebaseFirestore.instance
           .collection('scheduleRequests')
           .where('mentorId', isEqualTo: widget.mentorId)
-          .where('status', isEqualTo: 'accepted')
-          .where('scheduledDateTime', isLessThan: Timestamp.fromDate(DateTime.now()))
+          .where('status', isEqualTo: 'completed')
           .get();
 
       QuerySnapshot learnerSessions = await FirebaseFirestore.instance
           .collection('scheduleRequests')
           .where('requesterId', isEqualTo: widget.mentorId)
-          .where('status', isEqualTo: 'accepted')
-          .where('scheduledDateTime', isLessThan: Timestamp.fromDate(DateTime.now()))
+          .where('status', isEqualTo: 'completed')
           .get();
 
       int mentorCount = mentorSessions.docs.length;
@@ -215,6 +215,34 @@ class _MentorProfileScreenState extends State<MentorProfileScreen> {
       );
       setState(() {
         isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _checkCompletedSession() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        setState(() {
+          hasCompletedSession = false;
+        });
+        return;
+      }
+      QuerySnapshot completedSessions = await FirebaseFirestore.instance
+          .collection('scheduleRequests')
+          .where('mentorId', isEqualTo: widget.mentorId)
+          .where('requesterId', isEqualTo: user.uid)
+          .where('status', isEqualTo: 'completed')
+          .limit(1)
+          .get();
+      setState(() {
+        hasCompletedSession = completedSessions.docs.isNotEmpty;
+      });
+      print('Completed session check: hasCompletedSession=$hasCompletedSession');
+    } catch (e) {
+      print('Error checking completed session: $e');
+      setState(() {
+        hasCompletedSession = false;
       });
     }
   }
@@ -264,6 +292,174 @@ class _MentorProfileScreenState extends State<MentorProfileScreen> {
       print('Error navigating to chat: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error starting chat: $e')),
+      );
+    }
+  }
+
+  Future<void> _showAddReviewDialog() async {
+    int rating = 1;
+    TextEditingController commentController = TextEditingController();
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to submit a review')),
+      );
+      return;
+    }
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Review'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Rating:'),
+            DropdownButton<int>(
+              value: rating,
+              items: List.generate(5, (index) => index + 1)
+                  .map((value) => DropdownMenuItem(
+                        value: value,
+                        child: Text('$value Star${value > 1 ? 's' : ''}'),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  rating = value;
+                  (context as Element).markNeedsBuild();
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: commentController,
+              decoration: const InputDecoration(
+                labelText: 'Comment',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.black54)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                DocumentSnapshot userDoc = await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user.uid)
+                    .get();
+                String reviewerName = userDoc.exists ? userDoc['name'] ?? 'Unknown' : 'Unknown';
+                await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(widget.mentorId)
+                    .collection('reviews')
+                    .add({
+                  'reviewerId': user.uid,
+                  'reviewerName': reviewerName,
+                  'rating': rating,
+                  'comment': commentController.text.trim(),
+                  'timestamp': FieldValue.serverTimestamp(),
+                });
+                print('Review submitted: rating=$rating, comment=${commentController.text}');
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Review submitted')),
+                );
+              } catch (e) {
+                print('Error submitting review: $e');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error submitting review: $e')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showReviewsSnackBar() async {
+    try {
+      QuerySnapshot reviewsSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.mentorId)
+          .collection('reviews')
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      List<Widget> reviewWidgets = [];
+      if (reviewsSnapshot.docs.isEmpty) {
+        reviewWidgets.add(const Text('No reviews yet', style: TextStyle(color: Colors.black54)));
+      } else {
+        for (var doc in reviewsSnapshot.docs) {
+          var data = doc.data() as Map<String, dynamic>;
+          int rating = data['rating'] ?? 0;
+          String comment = data['comment'] ?? '';
+          String reviewerName = data['reviewerName'] ?? 'Unknown';
+          DateTime timestamp = (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+
+          reviewWidgets.add(
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: List.generate(
+                      rating,
+                      (index) => const Icon(Icons.star, color: Colors.orange, size: 16),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text('$reviewerName: $comment', style: const TextStyle(color: Colors.black)),
+                  Text(
+                    DateFormat('MMM d, yyyy').format(timestamp),
+                    style: const TextStyle(color: Colors.black54, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: reviewWidgets,
+            ),
+          ),
+          action: SnackBarAction(
+            label: 'Add Review',
+            textColor: hasCompletedSession ? Colors.orange : Colors.grey,
+            disabledTextColor: Colors.grey,
+            onPressed: hasCompletedSession
+                ? () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    _showAddReviewDialog();
+                  }
+                : () {},
+          ),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } catch (e) {
+      print('Error fetching reviews: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching reviews: $e')),
       );
     }
   }
@@ -370,11 +566,7 @@ class _MentorProfileScreenState extends State<MentorProfileScreen> {
                         ),
                         const SizedBox(width: 10),
                         ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Reviews functionality coming soon')),
-                            );
-                          },
+                          onPressed: _showReviewsSnackBar,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.orange,
                             foregroundColor: Colors.white,
