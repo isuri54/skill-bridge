@@ -1,8 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:skillbridge/screens/bottomnavbar.dart';
-import 'package:skillbridge/screens/signupscreen.dart';
+import 'package:skillbridge/screens/loginscreen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,13 +21,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuthState() async {
-    await Future.delayed(const Duration(seconds: 2));
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      Get.offAll(() => const BottomNavBar());
-    } else {
-      Get.offAll(() => const SignupScreen());
-    }
+    await Firebase.initializeApp();
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (user != null) {
+        Get.offAll(() => const BottomNavBar());
+      } else {
+        Get.offAll(() => const LoginScreen());
+      }
+    });
   }
 
   @override
